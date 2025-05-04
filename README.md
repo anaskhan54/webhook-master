@@ -4,7 +4,7 @@ A robust webhook delivery service built to efficiently ingest webhooks, queue th
 
 ## Live Deployment
 
-You can access the live deployment at: [https://whmaster.anaskhan.co.in](https://whmaster.anaskhan.co.in)
+You can access the live deployment at: [https://whmaster.anaskhan.co.in/swagger/](https://whmaster.anaskhan.co.in/swagger/)
 
 ## Features
 
