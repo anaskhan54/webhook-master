@@ -1,0 +1,86 @@
+version: '3.8'
+
+services:
+  # Django Web Application
+  web:
+    build: .
+    command: python WebhookMaster/manage.py runserver 0.0.0.0:8000
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    depends_on:
+      - redis
+      - db
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - DATABASE_URL=postgres://webhookmaster:webhookmaster@db:5432/webhookmaster
+      - DEBUG=True
+      - CREATE_SUPERUSER=true
+      - DJANGO_SUPERUSER_USERNAME=admin
+      - DJANGO_SUPERUSER_PASSWORD=admin
+      - DJANGO_SUPERUSER_EMAIL=admin@webhookmaster.com
+    restart: always
+
+  # Celery Worker
+  celery_worker:
+    build: .
+    working_dir: /app/WebhookMaster
+    command: celery -A WebhookMaster worker --loglevel=info
+    volumes:
+      - .:/app
+    depends_on:
+      - redis
+      - db
+      - web
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - DATABASE_URL=postgres://webhookmaster:webhookmaster@db:5432/webhookmaster
+      - PYTHONPATH=/app
+    restart: always
+
+  # Celery Beat for scheduled tasks
+  celery_beat:
+    build: .
+    working_dir: /app/WebhookMaster
+    command: celery -A WebhookMaster beat --loglevel=info
+    volumes:
+      - .:/app
+    depends_on:
+      - redis
+      - db
+      - web
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - DATABASE_URL=postgres://webhookmaster:webhookmaster@db:5432/webhookmaster
+      - PYTHONPATH=/app
+    restart: always
+
+  # PostgreSQL Database
+  db:
+    image: postgres:14
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    environment:
+      - POSTGRES_USER=webhookmaster
+      - POSTGRES_PASSWORD=webhookmaster
+      - POSTGRES_DB=webhookmaster
+    ports:
+      - "5432:5432"
+    restart: always
+
+  # Redis for caching and message broker
+  redis:
+    image: redis:7.0
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: always
+
+volumes:
+  postgres_data:
+  redis_data: 
